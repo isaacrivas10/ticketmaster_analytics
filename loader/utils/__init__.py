@@ -95,6 +95,12 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = replace_dots_in_column_names(df)
 
+    # Required processing specific to the TicketMaster API data
+    if "place_postalCode" in df.columns:
+        df = df.drop(
+            "place_postalCode", axis=1
+        )  # Postal Code is an inconsistent string when set in "Place" key, unusable
+
     # Apply lowercase transformation to JSON fields
     # Pandas and PyArrow allow for case insensitive column names so we can use lowercase keys for JSON fields to avoid having duplicated columns in BigQuery
     for col in df.columns:
@@ -130,6 +136,7 @@ event_keys = [
     "description",
     "ageRestrictions",
     "ticketing",
+    "place",
     "_embedded",
 ]
 
