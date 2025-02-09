@@ -1,6 +1,7 @@
 import pandas as pd
 import signal
 import sys
+import argparse
 from dotenv import load_dotenv
 from os import getenv
 from http_client.streams.discovery import EventsStream
@@ -51,6 +52,7 @@ def main(
                 logger.info("No events found.")
                 break
             events = response.json().get("_embedded").get("events")
+            # Apply preprocessing to ensure consistency
             df = process_dataframe(pd.json_normalize(filter_dicts(events, event_keys)))
             file_path = upload_dataframe_to_gcs(
                 df, getenv("CLOUD_STORAGE_BUCKET"), "events"
@@ -81,6 +83,20 @@ def main(
 
 
 if __name__ == "__main__":
+    # Argument parser setup
+    parser = argparse.ArgumentParser(description="Ticketmaster data loader")
+    parser.add_argument(
+        "--skip-extraction",
+        action="store_true",
+        help="Skip the extraction process",
+    )
+    parser.add_argument(
+        "--skip-loading",
+        action="store_true",
+        help="Skip the loading process",
+    )
+    args = parser.parse_args()
+
     snapshots_path = "./loader/data/latest_timestamp.json"
     config = {
         "url": "https://app.ticketmaster.com/discovery/v2",
@@ -97,5 +113,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     logger.info("Initializing extraction and loading process.")
-    main(config=config, skip_extraction=True, skip_loading=False)
+    main(
+        config=config,
+        skip_extraction=args.skip_extraction,
+        skip_loading=args.skip_loading,
+    )
     logger.info("Process completed.")
