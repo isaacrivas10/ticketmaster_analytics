@@ -1,0 +1,69 @@
+version: 2
+
+sources:
+    - name: raw
+      database: honduras-dstore
+      schema: ticketmaster
+      tables:
+          - name: raw_events
+            description: "Raw events data extracted from the API"
+
+# This includes some sample production tests that could help provide better data quality
+# For the sake of the test we will let some of this to fail.
+models:
+    - name: stg_events
+      description: "Staging table for Ticketmaster events —— cleaned and formatted."
+      columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+                - unique
+                - not_null
+          - name: event_name
+            description: "Event name"
+            tests:
+                - not_null
+          - name: sales_start_datetime
+            description: "Start date of event sales"
+            tests:
+                - not_null
+          - name: start_datetime
+            description: "Start date and time of the event"
+            tests:
+                - not_null
+          - name: venue.id
+            description: "Venue ID for the event if available"
+            tests:
+                - not_null
+          - name: is_multi_day_event
+            description: "Boolean flag for multi-day events"
+            tests:
+                - accepted_values:
+                      values: [True, False]
+                      quote: false
+          - name: legal_age_enforced
+            description: "Boolean flag for age enforcement"
+            tests:
+                - accepted_values:
+                      values: [True, False]
+                      quote: False
+          - name: event_timezone
+            description: "Timezone where the event is happening"
+            tests:
+                - accepted_values:
+                      values:
+                          [
+                              "America/New_York",
+                              "Europe/London",
+                              "Europe/Paris",
+                              "America/Chicago",
+                              "America/Indianapolis",
+                              "America/Phoenix",
+                          ]
+      tests:
+          - dbt_utils.unique_combination_of_columns:
+                combination_of_columns: ["id", "start_datetime"]
+          - dbt_utils.expression_is_true:
+                expression: "start_datetime < end_datetime"
+          - dbt_utils.expression_is_true:
+                expression: "price_details.min <= price_details.max"

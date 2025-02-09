@@ -169,3 +169,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# dbt
+dbt_packages
+logs
+target
+
+# GCP
+service_account.json

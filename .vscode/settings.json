@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": ["./loader"],
+    "editor.wordWrap": "on",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+}
