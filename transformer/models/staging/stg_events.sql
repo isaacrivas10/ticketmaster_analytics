@@ -23,7 +23,10 @@ WITH deduplicated AS (
         SAFE_CAST(sales_public_startDateTime AS TIMESTAMP) AS sales_start_datetime,
         SAFE_CAST(sales_public_endDateTime AS TIMESTAMP) AS sales_end_datetime,
         SAFE_CAST(dates_start_localDate AS DATE) AS start_local_date,
-        SAFE_CAST(dates_start_dateTime AS TIMESTAMP) AS start_datetime,
+        COALESCE(
+            SAFE_CAST(dates_start_dateTime AS TIMESTAMP), 
+            SAFE_CAST(CONCAT(dates_start_localDate, ' 00:00:00') AS TIMESTAMP)
+        ) AS start_datetime,
         SAFE_CAST(dates_end_localDate AS DATE) AS end_local_date,
         SAFE_CAST(dates_end_dateTime AS TIMESTAMP) AS end_datetime,
 
@@ -32,7 +35,6 @@ WITH deduplicated AS (
         SAFE_CAST(dates_spanMultipleDays AS BOOLEAN) AS is_multi_day_event,
         SAFE_CAST(ageRestrictions_legalAgeEnforced AS BOOLEAN) AS legal_age_enforced,
         ticketing_safeTix_enabled AS safeTix_enabled,
-        ticketing_allInclusivePricing_enabled AS all_inclusive_pricing,
 
         -- Extract first presale start date as fallback if public sale date is missing
         COALESCE(
@@ -72,26 +74,28 @@ WITH deduplicated AS (
                 1 -- Since the array usually contains a single record
         ) AS price_details,
         -- Extract first venue details
+        -- Coalescing to Place if no venue data found
         (
             SELECT
-                AS STRUCT venue.element.id AS id,
-                venue.element.name AS name,
-                venue.element.postalCode AS postal_code,
-                venue.element.city.name AS city,
-                venue.element.state.name AS state,
-                venue.element.state.statecode AS state_code,
-                venue.element.country.name AS country,
-                venue.element.country.countrycode AS country_code,
-                venue.element.location.latitude AS latitude,
-                venue.element.location.longitude AS longitude,
-                venue.element.locale AS locale,
-                venue.element.timezone AS timezone,
-                venue.element.type AS type
+                AS STRUCT 
+                    COALESCE(venue.element.id, NULL) AS id,
+                    COALESCE(venue.element.name, place_area_name) AS name,
+                    COALESCE(venue.element.postalCode, NULL) AS postal_code,
+                    COALESCE(venue.element.city.name, place_city_name) AS city,
+                    COALESCE(venue.element.state.name, place_state_name) AS state,
+                    COALESCE(venue.element.state.statecode, place_state_stateCode) AS state_code,
+                    COALESCE(venue.element.country.name, place_country_name) AS country,
+                    COALESCE(venue.element.country.countrycode, place_country_countryCode) AS country_code,
+                    COALESCE(SAFE_CAST(venue.element.location.latitude AS FLOAT64), place_location_latitude) AS latitude,
+                    COALESCE(SAFE_CAST(venue.element.location.longitude AS FLOAT64), place_location_longitude) AS longitude,
+                    COALESCE(venue.element.locale, NULL) AS locale,
+                    COALESCE(venue.element.timezone, NULL) AS timezone,
+                    COALESCE(venue.element.type, NULL) AS type
             FROM
                 UNNEST(_embedded_venues.list) AS venue
             LIMIT
                 1
-        ) AS venue,
+        ) AS venue, 
         -- Extract all attraction details
         ARRAY(
             SELECT
