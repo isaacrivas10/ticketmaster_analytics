@@ -1,0 +1,17 @@
+version: 2
+
+models:
+    - name: int_event_details
+      description: Derived insights from the staging event table
+    - name: int_event_attractions
+      description: Intermediate model linking events to their attractions
+      columns:
+          - name: event_id
+            description: Foreign key reference to the event
+            tests:
+                - not_null # Ensures every attraction belongs to an event
+
+          - name: attraction_id
+            description: Foreign key reference to the attraction
+            # tests: # We can't do this test since there are events with no attractions
+            #     - not_null
