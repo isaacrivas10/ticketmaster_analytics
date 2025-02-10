@@ -73,7 +73,9 @@ WITH event_base AS (
         venue.city AS venue_city,
         venue.state AS venue_state,
         venue.country AS venue_country,
-        venue.country_code AS venue_country_code
+        venue.country_code AS venue_country_code,
+        venue.latitude AS latitude,
+        venue.longitude AS longitude
     FROM {{ ref('stg_events') }}
 )
 
