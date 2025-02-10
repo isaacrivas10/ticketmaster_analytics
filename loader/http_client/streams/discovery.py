@@ -5,7 +5,9 @@ from ..http import HTTPClient
 
 class TicketMaster(HTTPClient):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        config = kwargs.get("config")
+        config["url"] = "https://app.ticketmaster.com/discovery/v2"
+        super().__init__(config=config)
 
     def get_headers(self, next_page: dict[str, str]) -> dict[str, str]:
         return {}

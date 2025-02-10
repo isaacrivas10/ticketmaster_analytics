@@ -99,7 +99,6 @@ if __name__ == "__main__":
 
     snapshots_path = "./loader/data/latest_timestamp.json"
     config = {
-        "url": "https://app.ticketmaster.com/discovery/v2",
         "apikey": getenv("TICKETMASTER_API_KEY"),
         "params": {  # This parameters will extract all events from 2020-01-01 to the current date
             "size": 200,
